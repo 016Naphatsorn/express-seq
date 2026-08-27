@@ -3,7 +3,7 @@ import { Product, connectDB } from "./db.js";
 const app = express();
 const PORT = 5000;
 import cors from "cors";
-
+app.use(cors({}));
 app.use(express.json());
 
 connectDB();
