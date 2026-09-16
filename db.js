@@ -4,35 +4,22 @@ import "dotenv/config";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is requuired");
+  throw new Error("DATABASE_URL is required in environment variables");
 }
 
-// const dbName = process.env.PGDATABASE;
-// const dbUserName = process.env.PGUSER;
-// const dbPassword = process.env.PGPASSWORD;
-// const dbURL = process.env.PGHOST_UNPOOLED;
-
-const databaseUrl = process.env.DATABASE_URL;
-const PORT = process.env.PORT;
-
-// database connection - fixed the "Sequelize" typo
-const sequelize = new Sequelize(dbName, dbUserName, dbPassword, {
-  host: dbURL,
-  port: PORT,
+// Database connection using DATABASE_URL with SSL enabled for Render/Cloud DB
+const sequelize = new Sequelize(databaseUrl, {
   dialect: "postgres",
   logging: false,
   dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false },
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // จำเป็นสำหรับการเชื่อมต่อบน Render/Supabase/Neon
+    },
   },
 });
-const sequelize = new Sequelize(databaseUrl, {
-  dailect: "postgres",
-  logging: false,
-  dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false },
-  },
-});
-// define database schema
+
+// Define database schema
 const Product = sequelize.define("Product", {
   id: {
     type: DataTypes.INTEGER,
