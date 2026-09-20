@@ -7,31 +7,51 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required in environment variables");
 }
 
-// Database connection using DATABASE_URL with SSL enabled for Render/Cloud DB
 const sequelize = new Sequelize(databaseUrl, {
   dialect: "postgres",
   logging: false,
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false, // จำเป็นสำหรับการเชื่อมต่อบน Render/Supabase/Neon
+      rejectUnauthorized: false,
     },
   },
 });
 
-// Define database schema
 const Product = sequelize.define("Product", {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
+
   name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  price: {
-    type: DataTypes.FLOAT,
+
+  age: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+
+  checkIn: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  checkOut: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  duration: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+
+  parentPhone: {
+    type: DataTypes.STRING,
     allowNull: false,
   },
 });
@@ -39,8 +59,11 @@ const Product = sequelize.define("Product", {
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
+
     console.log("Connected to PostgreSQL!!");
+
     await sequelize.sync({ alter: true });
+
     console.log("Table synchronized!");
   } catch (error) {
     console.error("Connection failed", error);

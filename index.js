@@ -1,12 +1,9 @@
-
 import express from "express";
 import { Product, connectDB } from "./db.js";
 import cors from "cors";
 
 const app = express();
 
-// Render จะกำหนด PORT ให้เอง
-// ถ้ารันในเครื่องจะใช้ port 5000
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
@@ -14,121 +11,229 @@ app.use(express.json());
 
 connectDB();
 
-// Test
+
+// ===============================
+// หน้าแรก
+// ===============================
 app.get("/", (req, res) => {
-  return res.json({ message: "Server is running!" });
+  res.json({
+    message: "Server is running!"
+  });
 });
 
-// สร้าง Product
+
+// ===============================
+// เพิ่มข้อมูลเด็ก
+// ===============================
 app.post("/api/products", async (req, res) => {
   try {
-    const { name, price } = req.body;
+    const {
+      name,
+      age,
+      checkIn,
+      checkOut,
+      duration,
+      parentPhone
+    } = req.body;
 
-    if (!name || price === undefined || price === null) {
-      return res
-        .status(400)
-        .json({ message: "Name & Price are required fields!!" });
+    if (
+      !name ||
+      age === undefined ||
+      !checkIn ||
+      !checkOut ||
+      duration === undefined ||
+      !parentPhone
+    ) {
+      return res.status(400).json({
+        message: "กรุณากรอกข้อมูลให้ครบถ้วน"
+      });
     }
 
     const newProduct = await Product.create({
-      name: name,
-      price: Number(price),
+      name,
+      age: Number(age),
+      checkIn,
+      checkOut,
+      duration: Number(duration),
+      parentPhone
     });
 
-    return res.status(201).json(newProduct);
+    res.status(201).json(newProduct);
+
   } catch (error) {
-    console.error("Server error!", error);
-    return res.status(500).json({ error: error.message });
+    console.error("Create error:", error);
+
+    res.status(500).json({
+      message: "ไม่สามารถบันทึกข้อมูลได้",
+      error: error.message
+    });
   }
 });
 
-// ดู Product ทั้งหมด
+
+// ===============================
+// ดูข้อมูลเด็กทั้งหมด
+// ===============================
 app.get("/api/products", async (req, res) => {
   try {
-    const products = await Product.findAll();
 
-    return res.json(products);
+    const products = await Product.findAll({
+      order: [["id", "DESC"]]
+    });
+
+    res.json(products);
+
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    console.error("Get error:", error);
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
 });
 
-// ดู Product ตาม ID
+
+// ===============================
+// ดูข้อมูลตาม ID
+// ===============================
 app.get("/api/products/:id", async (req, res) => {
+
   try {
+
     const { id } = req.params;
 
     const product = await Product.findByPk(id);
 
     if (!product) {
-      return res
-        .status(404)
-        .json({ message: "Product not Found!" });
+      return res.status(404).json({
+        message: "ไม่พบข้อมูล"
+      });
     }
 
-    return res.status(200).json(product);
+    res.json(product);
+
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
+
 });
 
-// อัพเดท Product
-app.put("/api/products/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, price } = req.body;
 
-    if (!name && price === undefined) {
-      return res
-        .status(400)
-        .json({ message: "Name or Price is required!" });
-    }
+// ===============================
+// แก้ไขข้อมูล
+// ===============================
+app.put("/api/products/:id", async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const {
+      name,
+      age,
+      checkIn,
+      checkOut,
+      duration,
+      parentPhone
+    } = req.body;
 
     const product = await Product.findByPk(id);
 
     if (!product) {
-      return res
-        .status(404)
-        .json({ message: "Product not Found!" });
+      return res.status(404).json({
+        message: "ไม่พบข้อมูล"
+      });
     }
 
     await product.update({
-      name: name || product.name,
-      price: price !== undefined ? Number(price) : product.price,
+
+      name: name ?? product.name,
+
+      age:
+        age !== undefined
+          ? Number(age)
+          : product.age,
+
+      checkIn:
+        checkIn ?? product.checkIn,
+
+      checkOut:
+        checkOut ?? product.checkOut,
+
+      duration:
+        duration !== undefined
+          ? Number(duration)
+          : product.duration,
+
+      parentPhone:
+        parentPhone ?? product.parentPhone
+
     });
 
-    return res.status(200).json(product);
+    res.json(product);
+
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    console.error("Update error:", error);
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
+
 });
 
-// ลบ Product
+
+// ===============================
+// ลบข้อมูล
+// ===============================
 app.delete("/api/products/:id", async (req, res) => {
+
   try {
+
     const { id } = req.params;
 
     const product = await Product.findByPk(id);
 
     if (!product) {
-      return res
-        .status(404)
-        .json({ message: "Product not Found!" });
+      return res.status(404).json({
+        message: "ไม่พบข้อมูล"
+      });
     }
 
     await product.destroy();
 
-    return res.status(200).json({
-      message: "Product is deleted successfully",
-      deleteProduct: product,
+    res.json({
+      message: "ลบข้อมูลสำเร็จ"
     });
+
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+
+    console.error("Delete error:", error);
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
+
 });
 
+
+// ===============================
 // Start Server
+// ===============================
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
+  console.log(
+    `Server is running on port ${PORT}`
+  );
+
+});
